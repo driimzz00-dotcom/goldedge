@@ -1,0 +1,2 @@
+# goldedge
+My XAUUSD analysis 
