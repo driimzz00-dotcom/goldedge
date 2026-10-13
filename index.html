@@ -1,0 +1,378 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10141d">
+<meta name="description" content="Free XAUUSD technical analysis and trading journal">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>GoldEdge | XAUUSD Analysis</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#10141d; --panel:#1a2230; --text:#f2f5fa;
+  --muted:#9aa8bb; --gold:#f4c45e; --line:#303a4b;
+}
+* { box-sizing:border-box }
+body {
+  margin:0; background:var(--bg); color:var(--text);
+  font:15px system-ui, sans-serif;
+}
+header { padding:20px 16px 12px; border-bottom:1px solid var(--line) }
+h1 { margin:0; font-size:25px }
+h2 { font-size:18px; margin-top:0 }
+h3 { font-size:15px }
+.gold { color:var(--gold) }
+.muted { color:var(--muted); font-size:13px }
+nav {
+  display:flex; gap:7px; padding:10px; overflow-x:auto;
+  position:sticky; top:0; background:var(--bg); z-index:2;
+}
+button, input, select, textarea {
+  font:inherit; border:1px solid var(--line); border-radius:9px;
+  padding:11px; background:var(--panel); color:var(--text);
+}
+button { cursor:pointer }
+nav button { white-space:nowrap }
+button.active, .primary { background:var(--gold); color:#151515; border-color:var(--gold) }
+main { max-width:850px; margin:auto; padding:12px }
+section { display:none }
+section.active { display:block }
+.card {
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:14px; padding:16px; margin-bottom:13px;
+}
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px }
+label { display:block; color:var(--muted); font-size:13px; margin-bottom:5px }
+input, select, textarea { width:100%; margin-bottom:12px }
+textarea { min-height:90px; resize:vertical }
+.full { width:100% }
+.result { font-size:23px; font-weight:700; overflow-wrap:anywhere }
+iframe { width:100%; height:420px; border:0; border-radius:10px }
+.row { display:flex; justify-content:space-between; gap:12px; align-items:center }
+.trade { border-top:1px solid var(--line); padding:12px 0 }
+.check { display:flex; gap:9px; align-items:flex-start; margin:12px 0 }
+.check input { width:auto; margin:3px 0 0 }
+.pill { color:var(--gold); font-size:12px }
+@media(max-width:480px) {
+  .grid { grid-template-columns:1fr }
+  iframe { height:350px }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="pill">PERSONAL TRADING WORKSPACE</div>
+  <h1>Gold<span class="gold">Edge</span></h1>
+  <div class="muted">XAUUSD · Analysis · Risk · Journal</div>
+</header>
+
+<nav>
+  <button class="active" data-tab="chart">Chart</button>
+  <button data-tab="analysis">Analysis</button>
+  <button data-tab="risk">Risk calculator</button>
+  <button data-tab="journal">Journal</button>
+  <button data-tab="checklist">Setup checklist</button>
+</nav>
+
+<main>
+<section id="chart" class="active">
+  <div class="card">
+    <h2>Gold market chart</h2>
+    <p class="muted">Embedded TradingView chart. Quote availability and delays depend on the data provider.</p>
+    <iframe title="XAUUSD chart"
+      src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AXAUUSD&interval=15&theme=dark&style=1&locale=en&timezone=Africa%2FWindhoek&hide_side_toolbar=0&allow_symbol_change=1&saveimage=0"
+      loading="lazy" allowfullscreen></iframe>
+    <p class="muted">If OANDA data is unavailable, change the symbol in the chart to a provider available in your region. Your broker's XAUUSDM quote may differ.</p>
+  </div>
+  <div class="card">
+    <h2>Before entering a trade</h2>
+    <p>Confirm market structure, liquidity, entry, stop loss, target and the economic calendar. A chart alone does not confirm a trade.</p>
+  </div>
+</section>
+
+<section id="analysis">
+  <div class="card">
+    <h2>Price analysis calculator</h2>
+    <p class="muted">Enter closing prices from oldest to newest, separated by commas. Example: 3300,3305,3302,3310,3314</p>
+    <label for="closes">Closing prices</label>
+    <textarea id="closes" placeholder="3300, 3305, 3302, 3310, 3314"></textarea>
+    <div class="grid">
+      <div>
+        <label for="period">EMA period</label>
+        <select id="period">
+          <option>9</option><option>20</option><option selected>50</option>
+          <option>100</option><option>200</option>
+        </select>
+      </div>
+      <div>
+        <label for="rsiPeriod">RSI period</label>
+        <select id="rsiPeriod">
+          <option>7</option><option selected>14</option><option>21</option>
+        </select>
+      </div>
+    </div>
+    <button class="primary full" id="calculate">Calculate indicators</button>
+    <div id="analysisResult" aria-live="polite" class="muted" style="margin-top:16px">
+      Your calculations will appear here.
+    </div>
+  </div>
+  <div class="card">
+    <h2>How to interpret</h2>
+    <p>Price above EMA can indicate upward momentum; below EMA can indicate downward momentum. RSI above 70 or below 30 can indicate stretched momentum, not an automatic reversal.</p>
+    <p class="muted">Use enough closing prices for the selected periods. These calculations do not detect BOS, CHOCH, FVG or order blocks automatically.</p>
+  </div>
+</section>
+
+<section id="risk">
+  <div class="card">
+    <h2>Trade risk calculator</h2>
+    <label for="balance">Account balance (account currency)</label>
+    <input id="balance" type="number" min="0" step="any" value="200">
+    <label for="riskPct">Risk per trade (%)</label>
+    <input id="riskPct" type="number" min="0.01" max="100" step="0.1" value="1">
+    <div class="grid">
+      <div>
+        <label for="entry">Entry price</label>
+        <input id="entry" type="number" step="any" placeholder="e.g. 3300">
+      </div>
+      <div>
+        <label for="stop">Stop-loss price</label>
+        <input id="stop" type="number" step="any" placeholder="e.g. 3295">
+      </div>
+    </div>
+    <label for="target">Take-profit price</label>
+    <input id="target" type="number" step="any" placeholder="e.g. 3310">
+    <button id="riskCalculate" class="primary full">Calculate risk and reward</button>
+    <div id="riskResult" aria-live="polite" style="margin-top:16px"></div>
+    <p class="muted">This estimates price-distance risk only. It does not calculate lots because XAUUSD contract size, tick value, account currency, commission and symbol specifications vary by broker. Verify position size with your broker's contract details before trading.</p>
+  </div>
+</section>
+
+<section id="journal">
+  <div class="card">
+    <h2>Trade journal</h2>
+    <p class="muted">Entries are stored locally in this browser on this device. They are not synced or backed up online.</p>
+    <label for="tradeDate">Date and time</label>
+    <input id="tradeDate" type="datetime-local">
+    <div class="grid">
+      <div>
+        <label for="direction">Direction</label>
+        <select id="direction"><option>Buy</option><option>Sell</option></select>
+      </div>
+      <div>
+        <label for="outcome">Outcome</label>
+        <select id="outcome"><option>Open</option><option>Win</option><option>Loss</option><option>Breakeven</option></select>
+      </div>
+    </div>
+    <div class="grid">
+      <div><label for="jEntry">Entry</label><input id="jEntry" type="number" step="any"></div>
+      <div><label for="jExit">Exit</label><input id="jExit" type="number" step="any"></div>
+    </div>
+    <label for="pnl">Profit/loss in account currency</label>
+    <input id="pnl" type="number" step="any" value="0">
+    <label for="notes">Reason for trade / lesson</label>
+    <textarea id="notes" placeholder="Setup, BOS, FVG, session, emotions, mistakes..."></textarea>
+    <button id="saveTrade" class="primary full">Save trade</button>
+    <div id="journalResult" aria-live="polite"></div>
+    <button id="exportTrades" class="full">Export journal as CSV</button>
+    <button id="clearTrades" class="full" style="margin-top:8px">Delete all journal entries</button>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="card">
+    <h2>Gold setup checklist</h2>
+    <p class="muted">Use this as a decision aid, not an automatic signal.</p>
+    <div id="checks">
+      <label class="check"><input type="checkbox">Higher-timeframe direction is clear</label>
+      <label class="check"><input type="checkbox">BOS or CHOCH has been confirmed</label>
+      <label class="check"><input type="checkbox">Liquidity level or sweep is identified</label>
+      <label class="check"><input type="checkbox">FVG or entry zone is clearly defined</label>
+      <label class="check"><input type="checkbox">Stop loss is at a logical invalidation level</label>
+      <label class="check"><input type="checkbox">Risk and reward meet my rules</label>
+      <label class="check"><input type="checkbox">Major news and spreads have been checked</label>
+    </div>
+    <p id="checkProgress" class="gold">0 of 7 checks completed</p>
+    <button id="resetChecks" class="full">Reset checklist</button>
+  </div>
+</section>
+
+<footer class="muted" style="padding:20px 4px">
+  Educational tool, not financial advice. No trade is guaranteed to win. Confirm all prices and calculations before risking money.
+</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+document.querySelectorAll("nav button").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("main section").forEach(s => s.classList.remove("active"));
+    button.classList.add("active");
+    $(button.dataset.tab).classList.add("active");
+  });
+});
+
+function ema(values, period) {
+  if (values.length < period) return null;
+  const alpha = 2 / (period + 1);
+  let result = values.slice(0, period).reduce((a,b) => a+b, 0) / period;
+  for (let i = period; i < values.length; i++)
+    result = values[i] * alpha + result * (1-alpha);
+  return result;
+}
+
+function rsi(values, period) {
+  if (values.length < period + 1) return null;
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const diff = values[i] - values[i-1];
+    if (diff > 0) gains += diff;
+    else losses -= diff;
+  }
+  let avgGain = gains / period, avgLoss = losses / period;
+  for (let i = period + 1; i < values.length; i++) {
+    const diff = values[i] - values[i-1];
+    avgGain = (avgGain * (period-1) + Math.max(diff,0)) / period;
+    avgLoss = (avgLoss * (period-1) + Math.max(-diff,0)) / period;
+  }
+  if (avgLoss === 0) return avgGain === 0 ? 50 : 100;
+  return 100 - 100 / (1 + avgGain / avgLoss);
+}
+
+$("calculate").addEventListener("click", () => {
+  const values = $("closes").value.split(/[\s,;]+/).filter(Boolean).map(Number);
+  const period = Number($("period").value);
+  const rp = Number($("rsiPeriod").value);
+  const out = $("analysisResult");
+  if (values.some(v => !Number.isFinite(v) || v <= 0)) {
+    out.textContent = "Enter valid positive prices separated by commas.";
+    return;
+  }
+  if (values.length < Math.max(period, rp+1)) {
+    out.textContent = `Enter at least ${Math.max(period, rp+1)} closing prices for these periods.`;
+    return;
+  }
+  const last = values[values.length-1], e = ema(values, period), r = rsi(values, rp);
+  out.innerHTML = `
+    <p>Latest close <span class="result">${last.toFixed(2)}</span></p>
+    <p>EMA ${period}: <b>${e.toFixed(2)}</b></p>
+    <p>RSI ${rp}: <b>${r.toFixed(2)}</b></p>
+    <p>Close vs EMA: <b>${last > e ? "Above EMA" : last < e ? "Below EMA" : "At EMA"}</b></p>
+    <p>RSI reading: <b>${r >= 70 ? "Potentially overbought" : r <= 30 ? "Potentially oversold" : "Between 30 and 70"}</b></p>
+    <p class="muted">Uses the entered prices only. These readings are not trade signals.</p>`;
+});
+
+$("riskCalculate").addEventListener("click", () => {
+  const balance = Number($("balance").value);
+  const pct = Number($("riskPct").value);
+  const entry = Number($("entry").value);
+  const stop = Number($("stop").value);
+  const target = Number($("target").value);
+  const out = $("riskResult");
+  if (!(balance > 0 && pct > 0 && pct <= 100 &&
+      entry > 0 && stop > 0 && target > 0)) {
+    out.textContent = "Enter valid positive values and a risk percentage up to 100.";
+    return;
+  }
+  const distance = Math.abs(entry-stop);
+  const reward = Math.abs(target-entry);
+  if (!distance || !reward || (entry-stop)*(target-entry) <= 0) {
+    out.textContent = "Check your direction: target and stop must be on opposite sides of entry.";
+    return;
+  }
+  const riskMoney = balance * pct / 100;
+  out.innerHTML = `<p>Planned account risk: <b>${riskMoney.toFixed(2)}</b></p>
+    <p>Stop distance: <b>${distance.toFixed(2)} price units</b></p>
+    <p>Target distance: <b>${reward.toFixed(2)} price units</b></p>
+    <p>Risk/reward: <span class="result">1 : ${(reward/distance).toFixed(2)}</span></p>
+    <p>Estimated profit at target: <b>${(riskMoney*reward/distance).toFixed(2)}</b> before costs, assuming the risk estimate is achievable.</p>`;
+});
+
+const STORAGE_KEY = "goldedge-journal-v1";
+function getTrades() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveTrades(trades) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+  renderTrades();
+}
+function renderTrades() {
+  const trades = getTrades();
+  $("journalResult").innerHTML = `<h3>${trades.length} journal entr${trades.length===1?"y":"ies"}</h3>` +
+    trades.slice().reverse().map(t => `<div class="trade">
+      <div class="row"><b>${escapeHTML(t.direction)} · ${escapeHTML(t.outcome)}</b>
+      <button data-delete="${t.id}">Delete</button></div>
+      <p class="muted">${escapeHTML(t.date)} · Entry ${escapeHTML(t.entry || "—")} · Exit ${escapeHTML(t.exit || "—")}</p>
+      <p>P/L: ${Number(t.pnl).toFixed(2)}</p>
+      <p>${escapeHTML(t.notes)}</p></div>`).join("");
+  $("journalResult").querySelectorAll("[data-delete]").forEach(b => {
+    b.addEventListener("click", () => saveTrades(getTrades().filter(t => t.id !== b.dataset.delete)));
+  });
+}
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+$("tradeDate").value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+$("saveTrade").addEventListener("click", () => {
+  const trade = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(),
+    date:$("tradeDate").value, direction:$("direction").value,
+    outcome:$("outcome").value, entry:$("jEntry").value,
+    exit:$("jExit").value, pnl:Number($("pnl").value || 0),
+    notes:$("notes").value
+  };
+  try {
+    saveTrades([...getTrades(), trade]);
+    $("notes").value = "";
+    $("journalResult").insertAdjacentHTML("afterbegin", "<p class='gold'>Trade saved on this device.</p>");
+  } catch {
+    alert("Could not save. Check your browser storage.");
+  }
+});
+$("exportTrades").addEventListener("click", () => {
+  const trades = getTrades();
+  const keys = ["date","direction","outcome","entry","exit","pnl","notes"];
+  const csv = [keys.join(","), ...trades.map(t => keys.map(k =>
+    '"' + String(t[k] ?? "").replace(/"/g,'""') + '"').join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  const a = document.createElement("a");
+  a.href = url; a.download = "goldedge-journal.csv"; a.click();
+  URL.revokeObjectURL(url);
+});
+$("clearTrades").addEventListener("click", () => {
+  if (confirm("Delete every saved journal entry? Export a backup first if needed.")) {
+    saveTrades([]);
+  }
+});
+
+function updateChecks() {
+  const inputs = [...$("checks").querySelectorAll("input")];
+  const count = inputs.filter(i => i.checked).length;
+  $("checkProgress").textContent = `${count} of ${inputs.length} checks completed`;
+  localStorage.setItem("goldedge-checks", JSON.stringify(inputs.map(i => i.checked)));
+}
+try {
+  const checks = JSON.parse(localStorage.getItem("goldedge-checks") || "[]");
+  $("checks").querySelectorAll("input").forEach((input,i) => input.checked = !!checks[i]);
+} catch {}
+$("checks").querySelectorAll("input").forEach(i => i.addEventListener("change", updateChecks));
+$("resetChecks").addEventListener("click", () => {
+  $("checks").querySelectorAll("input").forEach(i => i.checked = false);
+  updateChecks();
+});
+updateChecks();
+renderTrades();
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
