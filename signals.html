@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10141d">
+<title>GoldEdge Signals</title>
+<style>
+:root{color-scheme:dark;--bg:#10141d;--card:#1b2230;--text:#f3f5f8;--muted:#aab4c4;--gold:#e5bd58;--line:#30394a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px Arial,sans-serif;padding:18px;max-width:650px;margin:auto}
+header{padding:12px 0 18px}
+h1{margin:0;color:var(--gold);font-size:28px}
+p{line-height:1.5;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px;margin:14px 0}
+label{display:block;font-size:14px;color:var(--muted);margin:13px 0 6px}
+input{width:100%;padding:13px;border-radius:9px;border:1px solid var(--line);background:#10141d;color:white;font-size:17px}
+button{width:100%;padding:14px;border:0;border-radius:10px;background:var(--gold);color:#171717;font-weight:bold;font-size:16px;margin-top:16px}
+.result{font-size:24px;font-weight:bold;margin:6px 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:#10141d;border-radius:10px;padding:12px;overflow-wrap:anywhere}
+.tile small{display:block;color:var(--muted);margin-bottom:8px}
+.tile strong{font-size:18px}
+.green{color:#5fe0a0}.red{color:#ff8585}.gold{color:var(--gold)}
+.note{font-size:13px}
+a{color:var(--gold)}
+</style>
+</head>
+<body>
+<header>
+<h1>GoldEdge</h1>
+<p>XAUUSD · Rule-Based Trade Planner</p>
+</header>
+
+<div class="card">
+<h2>Enter your market data</h2>
+<p>Use values from the same timeframe and the same gold instrument. Enter indicator readings from your chart.</p>
+
+<label for="price">Current XAUUSD price</label>
+<input id="price" type="number" step="any" placeholder="e.g. 2650.50">
+
+<label for="ema20">EMA 20</label>
+<input id="ema20" type="number" step="any" placeholder="EMA 20 value">
+
+<label for="ema50">EMA 50</label>
+<input id="ema50" type="number" step="any" placeholder="EMA 50 value">
+
+<label for="rsi">RSI 14 (0–100)</label>
+<input id="rsi" type="number" min="0" max="100" step="any" placeholder="e.g. 56">
+
+<label for="atr">ATR 14 (price units)</label>
+<input id="atr" type="number" min="0" step="any" placeholder="e.g. 2.50">
+
+<label for="mult">Stop-loss distance (ATR multiplier)</label>
+<input id="mult" type="number" min="0.1" max="10" step="0.1" value="1.5">
+
+<label for="rr">Reward-to-risk ratio</label>
+<input id="rr" type="number" min="1" max="10" step="0.5" value="2">
+
+<button onclick="analyse()">Analyse setup</button>
+</div>
+
+<div class="card" id="output" aria-live="polite">
+<h2>Analysis result</h2>
+<p>Enter your data and tap Analyse setup.</p>
+</div>
+
+<div class="card">
+<h2>Rules used</h2>
+<p><strong class="green">BUY:</strong> EMA 20 above EMA 50, with RSI above 50 and below 70.</p>
+<p><strong class="red">SELL:</strong> EMA 20 below EMA 50, with RSI below 50 and above 30.</p>
+<p>If neither rule is met, the planner reports NO TRADE. These are basic educational rules, not a proven profitable strategy.</p>
+</div>
+
+<div class="card">
+<h2>Before trading</h2>
+<p class="note">The entry is the price you enter. The stop-loss is placed 1.5 ATR away by default, and the target is calculated from your selected reward-to-risk ratio. This page does not execute trades, fetch live prices, check spread, or account for slippage. Confirm all levels on your broker's chart before use.</p>
+<p class="note">A displayed setup is not a recommendation to risk real money. Test on a demo account first.</p>
+</div>
+
+<script>
+function num(id){
+  return Number(document.getElementById(id).value);
+}
+function fmt(n){
+  return n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:5});
+}
+function analyse(){
+  const p=num("price"), e20=num("ema20"), e50=num("ema50");
+  const rsi=num("rsi"), atr=num("atr"), mult=num("mult"), rr=num("rr");
+  const out=document.getElementById("output");
+
+  if(![p,e20,e50,rsi,atr,mult,rr].every(Number.isFinite) ||
+     [p,e20,e50,atr,mult,rr].some(v=>v<=0) ||
+     rsi<0 || rsi>100 || mult<0.1 || rr<1){
+    out.innerHTML="<h2>Check your inputs</h2><p>Enter valid positive prices, EMA values, ATR, multiplier and reward-to-risk ratio. RSI must be from 0 to 100.</p>";
+    return;
+  }
+
+  let side="";
+  if(e20>e50 && rsi>50 && rsi<70) side="BUY";
+  else if(e20<e50 && rsi<50 && rsi>30) side="SELL";
+
+  if(!side){
+    out.innerHTML='<h2 class="gold">NO TRADE</h2><p>The EMA and RSI conditions do not agree with the rules. Wait for a clearer setup rather than forcing a trade.</p>';
+    return;
+  }
+
+  const risk=atr*mult;
+  const sl=side==="BUY"?p-risk:p+risk;
+  const tp=side==="BUY"?p+risk*rr:p-risk*rr;
+  const cls=side==="BUY"?"green":"red";
+
+  out.innerHTML=`
+    <h2>Analysis result</h2>
+    <div class="result ${cls}">${side} SETUP</div>
+    <p>Rule match: EMA 20 / EMA 50 trend and RSI filter passed.</p>
+    <div class="grid">
+      <div class="tile"><small>ENTRY</small><strong>${fmt(p)}</strong></div>
+      <div class="tile"><small>STOP-LOSS</small><strong class="red">${fmt(sl)}</strong></div>
+      <div class="tile"><small>TAKE-PROFIT</small><strong class="green">${fmt(tp)}</strong></div>
+      <div class="tile"><small>Price risk distance</small><strong>${fmt(risk)}</strong></div>
+    </div>
+    <p>Planned reward-to-risk: 1:${rr}. Verify the result against your broker's actual price, spread and contract specifications.</p>
+    <button onclick="copyLevels('${side}',${p},${sl},${tp})">Copy trade levels</button>
+  `;
+}
+function copyLevels(side,entry,sl,tp){
+  const text=`GoldEdge ${side} setup\nEntry: ${entry}\nStop-loss: ${sl}\nTake-profit: ${tp}`;
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(()=>alert("Levels copied.")).catch(()=>prompt("Copy these levels:",text));
+  }else{
+    prompt("Copy these levels:",text);
+  }
+}
+</script>
+</body>
+</html>
